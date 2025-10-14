@@ -36,9 +36,6 @@ def connect_with_middleware(contract_json):
     
     # Inject the ExtraDataToPOAMiddleware into the Web3 instance
     w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-    
-    # Assuming checksum_addr is the address you want to use for the contract
-    checksum_addr = Web3.toChecksumAddress(address)  # Convert address to checksum format
     contract = w3.eth.contract(address=checksum_addr, abi=abi)
 
     return w3, contract
