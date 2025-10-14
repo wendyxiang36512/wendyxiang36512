@@ -11,10 +11,11 @@ infura_url = f"https://mainnet.infura.io/v3/{infura_token}"
 '''
 
 def connect_to_eth():
-	url = "https://mainnet.infura.io/v3/a18008fa878e4d99bd699920020c7cfd"  # FILL THIS IN
-	w3 = Web3(HTTPProvider(url))
-	assert w3.is_connected(), f"Failed to connect to provider at {url}"
-	return w3
+    url = "https://mainnet.infura.io/v3/a18008fa878e4d99bd699920020c7cfd"  # FILL THIS IN
+    w3 = Web3(HTTPProvider(url))
+    assert w3.is_connected(), f"Failed to connect to provider at {url}"
+    return w3
+
 
 
 	# complete this method
@@ -30,20 +31,22 @@ def connect_with_middleware(contract_json):
         abi = d['abi']
 
     url = "https://bsc-testnet.infura.io/v3/a18008fa878e4d99bd699920020c7cfd"  # FILL THIS IN
-	  w3 = Web3(HTTPProvider(url))
-	  assert w3.is_connected(), f"Failed to connect to provider at {url}"
-	 
+    w3 = Web3(HTTPProvider(url))
+    assert w3.is_connected(), f"Failed to connect to provider at {url}"
     
     # Inject the ExtraDataToPOAMiddleware into the Web3 instance
     w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-    contract = w3_bnb.eth.contract(address=checksum_addr, abi=abi)
+    
+    # Assuming checksum_addr is the address you want to use for the contract
+    checksum_addr = Web3.toChecksumAddress(address)  # Convert address to checksum format
+    contract = w3.eth.contract(address=checksum_addr, abi=abi)
 
     return w3, contract
+
 
 if __name__ == "__main__":
     # Connect to Ethereum
     w3_eth = connect_to_eth()
-
 
     # Connect to BSC with middleware and contract details
     w3, contract = connect_with_middleware("contract_info.json")
