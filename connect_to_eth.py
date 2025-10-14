@@ -36,7 +36,7 @@ def connect_with_middleware(contract_json):
     
     # Inject the ExtraDataToPOAMiddleware into the Web3 instance
     w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-    contract = w3.eth.contract(address=checksum_addr, abi=abi)
+    contract = w3.eth.contract(address=address, abi=abi)
 
     return w3, contract
 
