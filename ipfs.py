@@ -8,7 +8,7 @@ def pin_to_ipfs(data):
 	json_data = json.dumps(data)
 
 	url = "https://ipfs.infura.io:5001/api/v0/add" 
-	project_id = "a18008fa878e4d99bd699920020c7cfd"
+	project_id = "5Kb44U6SetDcH3FTO/p3cns04fvZTLN9pkYIFRn1u7gUdpkvrLyrNw"
 
 
 
@@ -33,7 +33,7 @@ def get_from_ipfs(cid,content_type="json"):
 	assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
 	#YOUR CODE HERE	
 	url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
-	project_id = "a18008fa878e4d99bd699920020c7cfd"
+	project_id = "5Kb44U6SetDcH3FTO/p3cns04fvZTLN9pkYIFRn1u7gUdpkvrLyrNw"
 
 
 	response = requests.get(url, headers={'Authorization': f'Bearer {project_id}'})
