@@ -8,7 +8,7 @@ def pin_to_ipfs(data):
 	json_data = json.dumps(data)
 
 	url = "https://ipfs.infura.io:5001/api/v0/add" 
-	project_id = "5Kb44U6SetDcH3FTO/p3cns04fvZTLN9pkYIFRn1u7gUdpkvrLyrNw"
+	project_id = "a18008fa878e4d99bd699920020c7cfd"
 
 
 
@@ -29,24 +29,32 @@ def pin_to_ipfs(data):
 	else:
 		raise Exception (f"Error pinning data: {response.status_code}, {response.text}")
 
-def get_from_ipfs(cid,content_type="json"):
-	assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
-	#YOUR CODE HERE	
-	url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
-	project_id = "5Kb44U6SetDcH3FTO/p3cns04fvZTLN9pkYIFRn1u7gUdpkvrLyrNw"
+def get_from_ipfs(cid, content_type="json"):
+    # Ensure the CID is a string
+    assert isinstance(cid, str), f"get_from_ipfs accepts a cid in the form of a string"
+    
+    # Infura IPFS gateway URL for retrieving content by CID
+    url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
+    project_id = "a18008fa878e4d99bd699920020c7cfd"  # Your Infura Project ID
 
+    # Headers for authentication with Infura (Bearer token authentication)
+    headers = {'Authorization': f'Bearer {project_id}'}  # Correct Bearer token format (space after 'Bearer')
 
-	response = requests.get(url, headers={'Authorization': f'Bearer {project_id}'})
+    # Send a POST request to retrieve the content from IPFS
+    response = requests.post(url, headers=headers)
 
-	if response.status_code ==200:
-		if content_type == "json":
-			data= response.json()
-		else:
-			data = response.text
-	else:		
-		raise Exception(f"Error retrieving data: {response.status_code}, {response.text}")
-    	
-
-
-	assert isinstance(data,dict), f"get_from_ipfs should return a dict"
-	return data
+    # Check if the request was successful (HTTP status code 200)
+    if response.status_code == 200:
+        if content_type == "json":
+            # Parse the JSON response into a Python dictionary
+            data = response.json()
+        else:
+            # If content type is not JSON, return the raw response text
+            data = response.text
+    else:
+        raise Exception(f"Error retrieving data: {response.status_code}, {response.text}")
+    
+    # Ensure that the data is a dictionary (only for JSON content)
+    assert isinstance(data, dict), f"get_from_ipfs should return a dict"
+    
+    return data
