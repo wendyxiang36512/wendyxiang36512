@@ -13,7 +13,7 @@ def pin_to_ipfs(data):
 
 
 	headers = {
-			'Authorization': f'Bearer{project_id}',
+			'Authorization': f'Bearer {project_id}',
 			'Content-Type': 'application/json'
 	}
 
