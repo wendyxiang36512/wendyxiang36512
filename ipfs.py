@@ -38,7 +38,7 @@ def get_from_ipfs(cid,content_type="json"):
 	response = requests.get(url, headers={'Authorization': f'Bearer {project_id}'})
 
 	if response.status_code ==200:
-		if content_type == "json"
+		if content_type == "json":
 			data= response.json()
 		else:
 			data = response.text
