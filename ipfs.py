@@ -5,7 +5,6 @@ import json
 PINATA_API_KEY = "51257ad2c286b84d9c8e"
 PINATA_API_SECRET = "10ea9ae1d83450975db89a8fe8598f98e5b8ca384d5e218cd5705bc1de88678f"
 
-
 def pin_to_ipfs(data):
     """
     Pins a Python dictionary (as JSON) to IPFS via Pinata and returns the CID.
@@ -32,7 +31,7 @@ def pin_to_ipfs(data):
     # Pinata authentication headers
     headers = {
         'pinata_api_key': PINATA_API_KEY,
-     
+        'pinata_secret_api_key': PINATA_API_SECRET
     }
 
     # Send the POST request to pin the data to IPFS
