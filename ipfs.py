@@ -5,10 +5,9 @@ PINATA_API_KEY = "16f350d0db260ea8d711"
 PINATA_API_SECRET = "6cd37cda7735469a14c99e087a6c65c9cf6b27048f996fe246f6612ec89ceda7"
 
 def pin_to_ipfs(data):
-	assert isinstance(data,dict), f"Error pin_to_ipfs expects a dictionary"
-	#YOUR CODE HERE
-
-# Convert the dictionary to JSON
+    assert isinstance(data, dict), f"Error pin_to_ipfs expects a dictionary"
+    
+    # Convert the dictionary to JSON
     json_data = json.dumps(data)
     
     # Pinata API URL for pinning data
@@ -36,10 +35,9 @@ def pin_to_ipfs(data):
     else:
         raise Exception(f"Error pinning data: {response.status_code}, {response.text}")
 
-
-def get_from_ipfs(cid,content_type="json"):
-	assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
-	#YOUR CODE HERE	
+def get_from_ipfs(cid, content_type="json"):
+    assert isinstance(cid, str), f"get_from_ipfs accepts a cid in the form of a string"
+    
     # Pinata's public IPFS gateway URL for retrieving content by CID
     url = f"https://gateway.pinata.cloud/ipfs/{cid}"
 
