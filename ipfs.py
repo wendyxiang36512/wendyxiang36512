@@ -1,23 +1,14 @@
 import requests
 import json
 
-# Set your Pinata API credentials here
 PINATA_API_KEY = "16f350d0db260ea8d711"
 PINATA_API_SECRET = "6cd37cda7735469a14c99e087a6c65c9cf6b27048f996fe246f6612ec89ceda7"
 
 def pin_to_ipfs(data):
-    """
-    Pins a Python dictionary (as JSON) to IPFS via Pinata and returns the CID.
-    
-    Parameters:
-    - data: A Python dictionary to be stored on IPFS.
-    
-    Returns:
-    - CID (Content Identifier) of the data stored.
-    """
-    assert isinstance(data, dict), f"Error pin_to_ipfs expects a dictionary"
-    
-    # Convert the dictionary to JSON
+	assert isinstance(data,dict), f"Error pin_to_ipfs expects a dictionary"
+	#YOUR CODE HERE
+
+# Convert the dictionary to JSON
     json_data = json.dumps(data)
     
     # Pinata API URL for pinning data
@@ -46,19 +37,9 @@ def pin_to_ipfs(data):
         raise Exception(f"Error pinning data: {response.status_code}, {response.text}")
 
 
-def get_from_ipfs(cid, content_type="json"):
-    """
-    Retrieves content from IPFS using the provided CID via Pinata's public gateway.
-    
-    Parameters:
-    - cid: The Content Identifier (CID) of the data stored on IPFS.
-    - content_type: The expected content type of the response (default is "json").
-    
-    Returns:
-    - A Python dictionary containing the content from IPFS.
-    """
-    assert isinstance(cid, str), f"get_from_ipfs accepts a cid in the form of a string"
-    
+def get_from_ipfs(cid,content_type="json"):
+	assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
+	#YOUR CODE HERE	
     # Pinata's public IPFS gateway URL for retrieving content by CID
     url = f"https://gateway.pinata.cloud/ipfs/{cid}"
 
