@@ -2,7 +2,8 @@ import requests
 import json
 
 # Set your Pinata API credentials here
-PINATA_API_KEY = "c266ccc2c7782d735d49"
+PINATA_API_KEY = "51257ad2c286b84d9c8e"
+PINATA_API_SECRET = "10ea9ae1d83450975db89a8fe8598f98e5b8ca384d5e218cd5705bc1de88678f"
 
 
 def pin_to_ipfs(data):
