@@ -35,13 +35,15 @@ def get_from_ipfs(cid,content_type="json"):
 	url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
 	project_id = 'a18008fa878e4d99bd699920020c7cfd'
 
-	response = requests.get(url, auth=(project_id))
+	response = requests.get(url, headers={'Authorization': f'Bearer {project_id}'})
 
 	if response.status_code ==200:
-		if content_type = "json"
-			data= response.text
+		if content_type == "json"
+			data= response.json()
 		else:
-			raise Exception(f"Error retrieving data: {response.status_code}, {response.text}")
+			data = response.text
+	else:		
+		raise Exception(f"Error retrieving data: {response.status_code}, {response.text}")
     	
 
 
