@@ -1,53 +1,82 @@
 import requests
 import json
 
+# Set your Pinata API credentials here
+PINATA_API_KEY = "c266ccc2c7782d735d49"
+
+
 def pin_to_ipfs(data):
-	assert isinstance(data,dict), f"Error pin_to_ipfs expects a dictionary"
-	#YOUR CODE HERE
+    """
+    Pins a Python dictionary (as JSON) to IPFS via Pinata and returns the CID.
+    
+    Parameters:
+    - data: A Python dictionary to be stored on IPFS.
+    
+    Returns:
+    - CID (Content Identifier) of the data stored.
+    """
+    assert isinstance(data, dict), f"Error pin_to_ipfs expects a dictionary"
+    
+    # Convert the dictionary to JSON
+    json_data = json.dumps(data)
+    
+    # Pinata API URL for pinning data
+    url = "https://api.pinata.cloud/pinning/pinFileToIPFS"
+    
+    # Prepare the file data for upload (upload JSON as a file)
+    files = {
+        'file': ('data.json', json_data, 'application/json')
+    }
 
-	json_data = json.dumps(data)
+    # Pinata authentication headers
+    headers = {
+        'pinata_api_key': PINATA_API_KEY,
+     
+    }
 
-	url = "https://ipfs.infura.io:5001/api/v0/add" 
-	project_id = "a18008fa878e4d99bd699920020c7cfd"
+    # Send the POST request to pin the data to IPFS
+    response = requests.post(url, headers=headers, files=files)
 
-
-
-	headers = {
-			'Authorization': f'Bearer {project_id}',
-			'Content-Type': 'application/json'
-	}
-
-	files = {
-	    'file': ('data.json', json_data, 'application/json')	
-	}
-
-	response = requests.post(url, headers=headers, files=files)
-
-	if response.status_code == 200:
-		cid = response.json()['Hash']
-		return cid
-	else:
-		raise Exception (f"Error pinning data: {response.status_code}, {response.text}")
-
-def get_from_ipfs(cid,content_type="json"):
-	assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
-	#YOUR CODE HERE	
-	url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
-	project_id = "a18008fa878e4d99bd699920020c7cfd"
-
-	headers = {'Authorization': f'Bearer {project_id}'} 
-
-	response = requests.post(url, headers=headers)
-
-	if response.status_code ==200:
-		if content_type == "json":
-			data= response.json()
-		else:
-			data = response.text
-	else:		
-		raise Exception(f"Error retrieving data: {response.status_code}, {response.text}")
-    	
+    # Check if the request was successful (HTTP status code 200)
+    if response.status_code == 200:
+        # Extract the CID (Content Identifier) from the response
+        cid = response.json()['IpfsHash']
+        return cid
+    else:
+        raise Exception(f"Error pinning data: {response.status_code}, {response.text}")
 
 
-	assert isinstance(data,dict), f"get_from_ipfs should return a dict"
-	return data
+def get_from_ipfs(cid, content_type="json"):
+    """
+    Retrieves content from IPFS using the provided CID via Pinata's public gateway.
+    
+    Parameters:
+    - cid: The Content Identifier (CID) of the data stored on IPFS.
+    - content_type: The expected content type of the response (default is "json").
+    
+    Returns:
+    - A Python dictionary containing the content from IPFS.
+    """
+    assert isinstance(cid, str), f"get_from_ipfs accepts a cid in the form of a string"
+    
+    # Pinata's public IPFS gateway URL for retrieving content by CID
+    url = f"https://gateway.pinata.cloud/ipfs/{cid}"
+
+    # Send a GET request to retrieve the content from IPFS
+    response = requests.get(url)
+
+    # Check if the request was successful (HTTP status code 200)
+    if response.status_code == 200:
+        if content_type == "json":
+            # Parse the JSON response into a Python dictionary
+            data = response.json()
+        else:
+            # If content type is not JSON, return the raw response text
+            data = response.text
+    else:
+        raise Exception(f"Error retrieving data: {response.status_code}, {response.text}")
+    
+    # Ensure that the data is a dictionary (only for JSON content)
+    assert isinstance(data, dict), f"get_from_ipfs should return a dict"
+    
+    return data
