@@ -11,29 +11,29 @@ from web3.providers.rpc import HTTPProvider
 # infura_url = f"https://mainnet.infura.io/v3/{infura_token}"
 
 def connect_to_eth():
-	# insert your code for this method from last week's assignment
-    url = "https://mainnet.infura.io/v3/a18008fa878e4d99bd699920020c7cfd"  
+    # insert your code for this method from last week's assignment
+    url = "https://mainnet.infura.io/v3/a18008fa878e4d99bd699920020c7cfd"
     w3 = Web3(HTTPProvider(url))
-    assert w3.is_connected(), f"Failed to connect to provider at {url}"  
-	  return w3
+    assert w3.is_connected(), f"Failed to connect to provider at {url}"
+    return w3
 
 
 def connect_with_middleware(contract_json):
-	# insert your code for this method from last week's assignment
+    # insert your code for this method from last week's assignment
     with open(contract_json, "r") as f:
         d = json.load(f)
-        d = d['bsc']  # Assuming 'bsc' is the key containing the contract info
-        address = d['address']
-        abi = d['abi']
+        d = d["bsc"]  # Assuming 'bsc' is the key containing the contract info
+        address = d["address"]
+        abi = d["abi"]
 
-    url = "https://bsc-testnet.infura.io/v3/a18008fa878e4d99bd699920020c7cfd"  
+    url = "https://bsc-testnet.infura.io/v3/a18008fa878e4d99bd699920020c7cfd"
     w3 = Web3(HTTPProvider(url))
     assert w3.is_connected(), f"Failed to connect to provider at {url}"
-    
+
     # Inject the ExtraDataToPOAMiddleware into the Web3 instance
     w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-    contract = w3.eth.contract(address=address, abi=abi)  
-	  return w3, contract
+    contract = w3.eth.contract(address=address, abi=abi)
+    return w3, contract
 
 
 def is_ordered_block(w3, block_num):
