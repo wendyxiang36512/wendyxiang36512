@@ -115,24 +115,19 @@ def get_contract_values(contract, admin_address, owner_address):
 	check on available contract functions and transactions on the block explorer at
 	https://testnet.bscscan.com/address/0xaA7CAaDA823300D18D3c43f65569a47e78220073
 	"""
-	default_admin_role = int.to_bytes(0, 32, byteorder="big")
+	  default_admin_role = int.to_bytes(0, 32, byteorder="big")
 
-	# complete the following lines by performing contract calls
-  # Get and return the merkleRoot from the provided contract
-	onchain_root = contract.functions.merkleRoot().call()
+	  # complete the following lines by performing contract calls
+    # Get and return the merkleRoot from the provided contract (bytes32)
+    onchain_root = contract.functions.merkleRoot().call()
 
-  
-  # Check the contract to see if the address "admin_address" has the role "default_admin_role"
-	has_role = contract.functions.hasRole(default_admin_role, admin_address).call()  
-  
-  
-	# Call the contract to get the prime owned by "owner_address"
-  prime = contract.functions.getPrimeByOwner(owner_address).call()
+    # Check if admin_address has the default admin role (no checksum)
+    has_role = contract.functions.hasRole(default_admin_role, admin_address).call()
 
+    # Get the prime owned by owner_address (no checksum)
+    prime = contract.functions.getPrimeByOwner(owner_address).call()
 
-
-	return onchain_root, has_role, prime
-
+    return onchain_root, has_role, prime
 
 """
 	This might be useful for testing (main is not run by the grader feel free to change 
