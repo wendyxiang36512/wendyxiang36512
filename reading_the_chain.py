@@ -37,26 +37,25 @@ def connect_with_middleware(contract_json):
 
 
 def is_ordered_block(w3, block_num):
-	"""
-	Takes a block number
-	Returns a boolean that tells whether all the transactions in the block are ordered by priority fee
+    """
+    Takes a block number
+    Returns a boolean that tells whether all the transactions in the block are ordered by priority fee
 
-	Before EIP-1559, a block is ordered if and only if all transactions are sorted in decreasing order of the gasPrice field
+    Before EIP-1559, a block is ordered if and only if all transactions are sorted in decreasing order of the gasPrice field
 
-	After EIP-1559, there are two types of transactions
-		*Type 0* The priority fee is tx.gasPrice - block.baseFeePerGas
-		*Type 2* The priority fee is min( tx.maxPriorityFeePerGas, tx.maxFeePerGas - block.baseFeePerGas )
+    After EIP-1559, there are two types of transactions
+        *Type 0* The priority fee is tx.gasPrice - block.baseFeePerGas
+        *Type 2* The priority fee is min( tx.maxPriorityFeePerGas, tx.maxFeePerGas - block.baseFeePerGas )
 
-	Conveniently, most type 2 transactions set the gasPrice field to be min( tx.maxPriorityFeePerGas + block.baseFeePerGas, tx.maxFeePerGas )
-	"""
-	block = w3.eth.get_block(block_num, full_transactions=True)
-	ordered = False
+    Conveniently, most type 2 transactions set the gasPrice field to be min( tx.maxPriorityFeePerGas + block.baseFeePerGas, tx.maxFeePerGas )
+    """
+    block = w3.eth.get_block(block_num, full_transactions=True)
+    ordered = False
 
-	# YOUR CODE HERE
     base_fee = getattr(block, "baseFeePerGas", None)
     txs = block["transactions"]
 
-    # 0 or 1 transaction -> trivially ordered
+    # 0 or 1 transaction 
     if len(txs) <= 1:
         return True
 
@@ -97,7 +96,9 @@ def is_ordered_block(w3, block_num):
         prev = pf
 
     ordered = True
+    # ===== END YOUR CODE =====
     return ordered
+
 
 
 def get_contract_values(contract, admin_address, owner_address):
