@@ -9,7 +9,7 @@ def sign(m):
 
     # create an account for signing the message
     account_object = Account.create()  # Create an Eth account
-    public_key = account_object.address()  # Eth account public key
+    public_key = account_object.address  # Eth account public key
     private_key = account_object.key  # Eth account private key
 
     # sign the given message "m"
