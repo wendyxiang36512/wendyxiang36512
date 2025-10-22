@@ -93,8 +93,6 @@ def main():
     print("balanceOf:", bal)
 
 
-    balance = contract.functions.balanceOf("0xdDACECE6a25fd171c4Db10205730FA60D40d3DC5").call()
-    print(f"NFTs owned by 0xdDACECE6a25fd171c4Db10205730FA60D40d3DC5: {balance}")
 
 
 if __name__ == "__main__":
