@@ -29,7 +29,7 @@ def sign_message(challenge, filename="secret_key.txt"):
             break
     assert priv is not None, "No private key found"
 
-    if not priv.startwith("0x"):
+    if not priv.startswith("0x"):
         priv = "0x" + priv
     
     message = encode_defunct(challenge)
