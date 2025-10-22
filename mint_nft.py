@@ -50,7 +50,7 @@ def send_txn(func):
         "chainId": 43113
     })
     signed = w3.eth.account.sign_transaction(tx, private_key=PRIVATE_KEY)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
     print("tx:", tx_hash.hex())
     rcpt = w3.eth.wait_for_transaction_receipt(tx_hash)
     if rcpt.status != 1:
@@ -91,6 +91,11 @@ def main():
 
     bal = contract.functions.balanceOf(PUBLIC_ADDR).call()
     print("balanceOf:", bal)
+
+
+    balance = contract.functions.balanceOf("0xdDACECE6a25fd171c4Db10205730FA60D40d3DC5").call()
+    print(f"NFTs owned by 0xdDACECE6a25fd171c4Db10205730FA60D40d3DC5: {balance}")
+
 
 if __name__ == "__main__":
     main()
