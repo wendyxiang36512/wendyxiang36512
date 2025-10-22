@@ -2,7 +2,7 @@ import os, json, secrets
 from dotenv import load_dotenv
 from web3 import Web3
 from eth_account import Account
-from web3.middleware import geth_poa_middleware
+
 
 # --- env & RPC ---
 load_dotenv()
@@ -11,7 +11,10 @@ PUBLIC_ADDR = os.getenv("PUBLIC_ADDR")
 assert PRIVATE_KEY and PUBLIC_ADDR, "Set PRIVATE_KEY and PUBLIC_ADDR in .env!"
 
 w3 = Web3(Web3.HTTPProvider("https://api.avax-test.network/ext/bc/C/rpc"))
-w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+from web3.middleware import ExtraDataToPOAMiddleware
+w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+
 assert w3.is_connected(), "Failed to connect to Fuji"
 
 # --- load contract ---
