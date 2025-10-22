@@ -5,11 +5,9 @@ import os
 try:
     # web3 v6+
     from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
-    Middleware = ExtraDataToPOAMiddleware
 except ImportError:
-    # web3 v5
-    from web3.middleware import geth_poa_middleware
-    Middleware = geth_poa_middleware
+    # fallback for older web3 where only geth_poa_middleware exists
+    from web3.middleware import geth_poa_middleware as ExtraDataToPOAMiddleware
 
 # ---------- CONFIG ----------
 RPC_URL  = "https://api.avax-test.network/ext/bc/C/rpc"  # Avalanche Fuji
