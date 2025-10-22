@@ -1,68 +1,69 @@
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 import os
 
-# ====== 配置 ======
-RPC_URL = "https://api.avax-test.network/ext/bc/C/rpc"   # Avalanche Fuji
+# ----- Handle both web3 v6 and v5 for POA middleware -----
+try:
+    # web3 v6+
+    from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
+    Middleware = ExtraDataToPOAMiddleware
+except ImportError:
+    # web3 v5
+    from web3.middleware import geth_poa_middleware
+    Middleware = geth_poa_middleware
+
+# ---------- CONFIG ----------
+RPC_URL  = "https://api.avax-test.network/ext/bc/C/rpc"  # Avalanche Fuji
 CHAIN_ID = 43113
 CONTRACT = Web3.to_checksum_address("0x85ac2e065d4526FBeE6a2253389669a12318A412")
-
 PRIVATE_KEY = "0xf6a2bf61cb37b41d6378e7ce4575ca094f0261035b5ceadaaad10431ad721d41"
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
-w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+w3.middleware_onion.inject(Middleware, layer=0)
 
 acct = w3.eth.account.from_key(PRIVATE_KEY)
 ADDR = acct.address
 print("Using address:", ADDR)
 
-def selector(sig: str) -> bytes:
+# ---------- HELPERS ----------
+def fn_selector(sig: str) -> bytes:
+    """First 4 bytes of keccak(signature) as BYTES (no 0x)."""
     return Web3.keccak(text=sig)[:4]
 
-def pad32(x: bytes) -> str:
-    return x.rjust(32, b"\x00").hex()
+def pad32_uint(x: int) -> bytes:
+    return x.to_bytes(32, "big")
 
+def pad32_addr(addr: str) -> bytes:
+    return bytes.fromhex(addr[2:]).rjust(32, b"\x00")
 
-def hexaddr32(addr: str) -> str:
-    return pad32(bytes.fromhex(addr[2:]))
-
-sel_claim = selector("claim(bytes32)").hex() 
-
-nonce_bytes = os.urandom(32)
-arg_nonce = nonce_bytes.hex()  
-
-data_claim = "0x" + sel_claim + arg_nonce
+# ---------- 1) claim(bytes32 nonce) ----------
+print("\n=== claim(bytes32) ===")
+selector = fn_selector("claim(bytes32)")        # 4 bytes
+nonce_bytes = os.urandom(32)                    # 32 bytes
+calldata = selector + nonce_bytes               # BYTES concat
+data_hex = Web3.to_hex(calldata)                # single 0x-prefixed string
+print("nonce:", Web3.to_hex(nonce_bytes))
 
 tx = {
     "to": CONTRACT,
     "from": ADDR,
     "nonce": w3.eth.get_transaction_count(ADDR),
-    "data": data_claim,
+    "data": data_hex,
     "chainId": CHAIN_ID,
-    "gas": 300000,
+    "gas": 100000,
+    "maxFeePerGas": w3.to_wei("40", "gwei"),
+    "maxPriorityFeePerGas": w3.to_wei("1", "gwei"),
 }
 
-base = w3.to_wei("30", "gwei")
-tx["maxFeePerGas"] = base
-tx["maxPriorityFeePerGas"] = w3.to_wei("1", "gwei")
-
-signed = w3.eth.account.sign_transaction(tx, private_key=PRIVATE_KEY)
+signed = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
 tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-print("claim tx sent:", tx_hash.hex())
-
+print("claim tx:", tx_hash.hex())
 rcpt = w3.eth.wait_for_transaction_receipt(tx_hash)
-print("claim status:", rcpt.status)
+print("claim status (1=success):", rcpt.status)
 
-sel_balanceOf = selector("balanceOf(address)").hex()
-arg_owner = hexaddr32(ADDR)
-
-data_balance = "0x" + sel_balanceOf + arg_owner
-
-call = {
-    "to": CONTRACT,
-    "data": data_balance,
-}
-
-bal_hex = w3.eth.call(call).hex()
+# ---------- 2) balanceOf(address) ----------
+print("\n=== balanceOf(address) ===")
+sel_bal = fn_selector("balanceOf(address)")
+calldata_bal = sel_bal + pad32_addr(ADDR)
+bal_hex = w3.eth.call({"to": CONTRACT, "data": Web3.to_hex(calldata_bal)}).hex()
 balance = int(bal_hex, 16)
-print("balanceOf(you) =", balance)
+print(f"balanceOf({ADDR}) =", balance)
