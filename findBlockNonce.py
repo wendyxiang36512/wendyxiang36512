@@ -21,7 +21,6 @@ def mine_block(k, prev_hash, transactions):
     # your code to find a nonce here
 
     base = hashlib.sha256()
-
     base.update(prev_hash)
     for line in transactions:
         base.update(line.encode('utf-8'))
@@ -33,12 +32,13 @@ def mine_block(k, prev_hash, transactions):
         m.update(nonce)
         digest = m.digest()
 
-    if count_trailing_zero_bits(digest) >= k:
 
-        assert isinstance(nonce, bytes), 'nonce should be of type bytes'
-        return nonce
-    
-    i+=1
+        if if_count_trailing_zero_bits(digest) >= k:
+            assert isinstance(nonce, bytes), 'nonce should be of type bytes'
+            return nonce
+
+
+        i += 1
 # helper function 
 
     def if_count_trailing_zero_bits(digest_bytes):
