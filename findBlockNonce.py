@@ -21,6 +21,7 @@ def mine_block(k, prev_hash, transactions):
     # your code to find a nonce here
 
     base = hashlib.sha256()
+
     base.update(prev_hash)
     for line in transactions:
         base.update(line.encode('utf-8'))
@@ -32,25 +33,23 @@ def mine_block(k, prev_hash, transactions):
         m.update(nonce)
         digest = m.digest()
 
-
-        if if_count_trailing_zero_bits(digest) >= k:
-            assert isinstance(nonce, bytes), 'nonce should be of type bytes'
-            return nonce
-
-
-        i += 1
+    if count_trailing_zero_bits(digest) >= k:
+        assert isinstance(nonce, bytes), 'nonce should be of type bytes'
+        return nonce
+    
+    i+=1
 # helper function 
 
-    def if_count_trailing_zero_bits(digest_bytes):
-        count = 0
-        for b in reversed(digest_bytes):
-            if b ==0:
-                count +=8
-            else:
-                count += ((b & -b).bit_length()-1)
-                break 
-        return count 
+def count_trailing_zero_bits(digest_bytes):
 
+    count = 0
+    for b in reversed(digest_bytes):
+        if b == 0:
+            count += 8
+        else:
+            count += ((b & -b).bit_length() - 1)
+            break
+    return count
 
 def get_random_lines(filename, quantity):
     """
@@ -77,7 +76,7 @@ if __name__ == '__main__':
     # The "difficulty" level. For our blocks this is the number of Least Significant Bits
     # that are 0s. For example, if diff = 5 then the last 5 bits of a valid block hash would be zeros
     # The grader will not exceed 20 bits of "difficulty" because larger values take to long
-    diff = 5
+    diff = 20
 
     transactions = get_random_lines(filename, num_lines)
     nonce = mine_block(diff, transactions)
