@@ -4,6 +4,20 @@ import os
 import random
 
 
+def count_trailing_zero_bits(digest_bytes):
+    """
+    Helper function: count number of trailing zero bits (LSBs) in the binary form of digest_bytes
+    """
+    count = 0
+    for b in reversed(digest_bytes):
+        if b == 0:
+            count += 8
+        else:
+            count += ((b & -b).bit_length() - 1)
+            break
+    return count
+
+
 def mine_block(k, prev_hash, transactions):
     """
         k - Number of trailing zeros in the binary representation (integer)
@@ -19,9 +33,7 @@ def mine_block(k, prev_hash, transactions):
         return b'\x00'
 
     # your code to find a nonce here
-
     base = hashlib.sha256()
-
     base.update(prev_hash)
     for line in transactions:
         base.update(line.encode('utf-8'))
@@ -33,23 +45,13 @@ def mine_block(k, prev_hash, transactions):
         m.update(nonce)
         digest = m.digest()
 
-    if count_trailing_zero_bits(digest) >= k:
-        assert isinstance(nonce, bytes), 'nonce should be of type bytes'
-        return nonce
-    
-    i+=1
-# helper function 
+        # 使用不冲突的辅助函数名
+        if count_trailing_zero_bits(digest) >= k:
+            assert isinstance(nonce, bytes), 'nonce should be of type bytes'
+            return nonce
 
-def count_trailing_zero_bits(digest_bytes):
+        i += 1
 
-    count = 0
-    for b in reversed(digest_bytes):
-        if b == 0:
-            count += 8
-        else:
-            count += ((b & -b).bit_length() - 1)
-            break
-    return count
 
 def get_random_lines(filename, quantity):
     """
@@ -79,5 +81,6 @@ if __name__ == '__main__':
     diff = 20
 
     transactions = get_random_lines(filename, num_lines)
-    nonce = mine_block(diff, transactions)
+    prev_hash = b"genesis"  # 本地测试时提供一个 bytes 作为 prev_hash
+    nonce = mine_block(diff, prev_hash, transactions)
     print(nonce)
