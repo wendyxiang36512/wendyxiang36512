@@ -4,19 +4,6 @@ import os
 import random
 
 
-def count_trailing_zero_bits(digest_bytes):
-    """
-    Helper function: count number of trailing zero bits (LSBs) in the binary form of digest_bytes
-    """
-    count = 0
-    for b in reversed(digest_bytes):
-        if b == 0:
-            count += 8
-        else:
-            count += ((b & -b).bit_length() - 1)
-            break
-    return count
-
 
 def mine_block(k, prev_hash, transactions):
     """
@@ -45,12 +32,24 @@ def mine_block(k, prev_hash, transactions):
         m.update(nonce)
         digest = m.digest()
 
-        # 使用不冲突的辅助函数名
         if count_trailing_zero_bits(digest) >= k:
             assert isinstance(nonce, bytes), 'nonce should be of type bytes'
             return nonce
 
         i += 1
+
+def count_trailing_zero_bits(digest_bytes):
+    """
+    Helper function: count number of trailing zero bits (LSBs) in the binary form of digest_bytes
+    """
+    count = 0
+    for b in reversed(digest_bytes):
+        if b == 0:
+            count += 8
+        else:
+            count += ((b & -b).bit_length() - 1)
+            break
+    return count
 
 
 def get_random_lines(filename, quantity):
