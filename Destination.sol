@@ -1,84 +1,70 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./BridgeToken.sol";
 
 contract Destination is AccessControl {
     bytes32 public constant WARDEN_ROLE = keccak256("BRIDGE_WARDEN_ROLE");
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
-	mapping( address => address) public underlying_tokens;
-	mapping( address => address) public wrapped_tokens;
-	address[] public tokens;
+    mapping(address => address) public underlying_tokens; // underlying => wrapped
+    mapping(address => address) public wrapped_tokens;    // wrapped => underlying
+    address[] public tokens;
 
-	event Creation( address indexed underlying_token, address indexed wrapped_token );
-	event Wrap( address indexed underlying_token, address indexed wrapped_token, address indexed to, uint256 amount );
-	event Unwrap( address indexed underlying_token, address indexed wrapped_token, address frm, address indexed to, uint256 amount );
+    event Creation(address indexed underlying_token, address indexed wrapped_token);
+    event Wrap(address indexed underlying_token, address indexed wrapped_token, address indexed to, uint256 amount);
+    event Unwrap(address indexed underlying_token, address indexed wrapped_token, address frm, address indexed to, uint256 amount);
 
-    constructor( address admin ) {
+    constructor(address admin) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(CREATOR_ROLE, admin);
         _grantRole(WARDEN_ROLE, admin);
     }
 
-	function wrap(address _underlying_token, address _recipient, uint256 _amount ) public onlyRole(WARDEN_ROLE) {
-		//YOUR CODE HERE
-      require(_underlying_token != address(0), "underlying=0");
-      require(_recipient != address(0), "recipient=0");
-      require(_amount > 0, "amount=0");
+    function wrap(address _underlying_token, address _recipient, uint256 _amount) public onlyRole(WARDEN_ROLE) {
+        require(_underlying_token != address(0), "underlying=0");
+        require(_recipient != address(0), "recipient=0");
+        require(_amount > 0, "amount=0");
 
-      address wrapped = underlying_tokens[_underlying_token];
-      require(wrapped != address(0), "unregistered underlying");
+        address wrapped = underlying_tokens[_underlying_token];
+        require(wrapped != address(0), "unregistered underlying");
 
-      uint256 size;
-      assembly { size := extcodesize(wrapped) }
-      require(size > 0, "wrapped not contract");
+        BridgeToken(wrapped).mint(_recipient, _amount);
 
-      BridgeToken(wrapped).mint(_recipient, _amount);
+        emit Wrap(_underlying_token, wrapped, _recipient, _amount);
+    }
 
-      emit Wrap(_underlying_token, wrapped, _recipient, _amount);
-	}
+    function unwrap(address _wrapped_token, address _recipient, uint256 _amount) public {
+        require(_wrapped_token != address(0), "wrapped=0");
+        require(_recipient != address(0), "recipient=0");
+        require(_amount > 0, "amount=0");
 
-	function unwrap(address _wrapped_token, address _recipient, uint256 _amount ) public {
-      require(_wrapped_token != address(0), "wrapped=0");
-      require(_recipient != address(0), "recipient=0");
-      require(_amount > 0, "amount=0");
+        address underlying = wrapped_tokens[_wrapped_token];
+        require(underlying != address(0), "unregistered wrapped");
 
-      address underlying = wrapped_tokens[_wrapped_token];
-      require(underlying != address(0), "unregistered wrapped");
+        // 仅销毁调用者本人的代币；如 BridgeToken 采用 allowance 机制，需先由用户 approve 给本合约
+        BridgeToken(_wrapped_token).burnFrom(msg.sender, _amount);
 
-      uint256 size;
-      assembly { size := extcodesize(_wrapped_token) }
-      require(size > 0, "wrapped not contract");
+        emit Unwrap(underlying, _wrapped_token, msg.sender, _recipient, _amount);
+    }
 
-      BridgeToken(_wrapped_token).burnFrom(msg.sender, _amount);
+    function createToken(address _underlying_token, string memory name, string memory symbol)
+        public
+        onlyRole(CREATOR_ROLE)
+        returns (address)
+    {
+        require(_underlying_token != address(0), "underlying=0");
+        require(underlying_tokens[_underlying_token] == address(0), "already registered");
 
-      emit Unwrap(underlying, _wrapped_token, msg.sender, _recipient, _amount);
-	}
+        // BridgeToken 的构造需要 4 个参数（含 destination）
+        BridgeToken wrapped = new BridgeToken(_underlying_token, name, symbol, address(this));
+        address wrappedAddr = address(wrapped);
 
-	function createToken(address _underlying_token, string memory name, string memory symbol ) public onlyRole(CREATOR_ROLE) returns(address) {
-		//YOUR CODE HERE
-      require(_underlying_token != address(0), "underlying=0");
-      require(bytes(name).length > 0, "name empty");
-      require(bytes(symbol).length > 0, "symbol empty");
-      require(underlying_tokens[_underlying_token] == address(0), "already registered");
+        underlying_tokens[_underlying_token] = wrappedAddr;
+        wrapped_tokens[wrappedAddr] = _underlying_token;
+        tokens.push(wrappedAddr);
 
-      BridgeToken wrapped = new BridgeToken(_underlying_token, name, symbol, address(this));
-      address wrappedAddr = address(wrapped);
-
-      uint256 size;
-      assembly { size := extcodesize(wrappedAddr) }
-      require(size > 0, "deploy failed");
-      require(wrapped.underlying() == _underlying_token, "underlying mismatch");
-
-      underlying_tokens[_underlying_token] = wrappedAddr;
-      wrapped_tokens[wrappedAddr] = _underlying_token;
-      tokens.push(wrappedAddr);
-
-      emit Creation(_underlying_token, wrappedAddr);
-      return wrappedAddr;
-
-	}
-
+        emit Creation(_underlying_token, wrappedAddr);
+        return wrappedAddr;
+    }
 }
