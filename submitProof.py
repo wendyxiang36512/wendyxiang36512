@@ -80,8 +80,7 @@ def convert_leaves(primes_list):
     """
 
     # YOUR CODE HERE
-    leaves = [Web3.solidity_keccak(['uint256'], [p]) for p in primes_list]
-
+    leaves = [p.to_bytes(32, 'big', signed=False) for p in primes_list]
     return leaves
 
 
