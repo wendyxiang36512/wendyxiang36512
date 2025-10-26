@@ -31,6 +31,10 @@ contract Destination is AccessControl {
       address wrapped = underlying_tokens[_underlying_token];
       require(wrapped != address(0), "unregistered underlying");
 
+      uint256 size;
+      assembly { size := extcodesize(wrapped) }
+      require(size > 0, "wrapped not contract");
+
       BridgeToken(wrapped).mint(_recipient, _amount);
 
       emit Wrap(_underlying_token, wrapped, _recipient, _amount);
@@ -44,6 +48,10 @@ contract Destination is AccessControl {
       address underlying = wrapped_tokens[_wrapped_token];
       require(underlying != address(0), "unregistered wrapped");
 
+      uint256 size;
+      assembly { size := extcodesize(_wrapped_token) }
+      require(size > 0, "wrapped not contract");
+
       BridgeToken(_wrapped_token).burnFrom(msg.sender, _amount);
 
       emit Unwrap(underlying, _wrapped_token, msg.sender, _recipient, _amount);
@@ -52,10 +60,17 @@ contract Destination is AccessControl {
 	function createToken(address _underlying_token, string memory name, string memory symbol ) public onlyRole(CREATOR_ROLE) returns(address) {
 		//YOUR CODE HERE
       require(_underlying_token != address(0), "underlying=0");
+      require(bytes(name).length > 0, "name empty");
+      require(bytes(symbol).length > 0, "symbol empty");
       require(underlying_tokens[_underlying_token] == address(0), "already registered");
 
       BridgeToken wrapped = new BridgeToken(_underlying_token, name, symbol, address(this));
       address wrappedAddr = address(wrapped);
+
+      uint256 size;
+      assembly { size := extcodesize(wrappedAddr) }
+      require(size > 0, "deploy failed");
+      require(wrapped.underlying() == _underlying_token, "underlying mismatch");
 
       underlying_tokens[_underlying_token] = wrappedAddr;
       wrapped_tokens[wrappedAddr] = _underlying_token;
