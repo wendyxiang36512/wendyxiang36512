@@ -99,14 +99,17 @@ def build_merkle(leaves):
         return tree
     level = list(leaves)
     tree.append(level)
+
     while len(level) > 1:
         next_level = []
-        # If odd, duplicate last (OpenZeppelin proofs tolerate this if tree built the same way)
-        if len(level) % 2 == 1:
-            level = level + [level[-1]]
-        for i in range(0, len(level), 2):
+        i = 0
+        while i + 1 < len(level):
             parent = hash_pair(level[i], level[i + 1])
             next_level.append(parent)
+            i += 2
+        if i < len(level):  
+            next_level.append(level[i])
+
         tree.append(next_level)
         level = next_level
 
@@ -121,25 +124,24 @@ def prove_merkle(merkle_tree, random_indx):
         returns a proof of inclusion as list of values
     """
     merkle_proof = []
-    # YOUR CODE HERE
     if not merkle_tree or random_indx < 0 or random_indx >= len(merkle_tree[0]):
         return merkle_proof
 
     idx = random_indx
-
-    for level_i in range(len(merkle_tree) -1):
+    for level_i in range(len(merkle_tree) - 1):
         level = merkle_tree[level_i]
-        last_idx = len(level) -1
-        if len(level) % 2 == 1:
-            pass
 
-        if idx % 2 ==0:
-            sib_idx = idx + 1 if idx + 1 <= last_idx else idx
+        if (len(level) % 2 == 1) and (idx == len(level) - 1):
+            idx //= 2
+            continue
+
+        if idx % 2 == 0:
+            sib_idx = idx + 1
         else:
             sib_idx = idx - 1
-        merkle_proof.append(level[sib_idx])
 
-        idx //= 2    
+        merkle_proof.append(level[sib_idx])
+        idx //= 2
 
     return merkle_proof
 
