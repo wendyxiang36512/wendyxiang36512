@@ -57,31 +57,32 @@ contract AMM is AccessControl{
 		uint256 swapAmt;
 
 		//YOUR CODE HERE 
-		qtyA = ERC20(tokenA).balanceOf(address(this));
-		qtyB = ERC20(tokenB).balanceOf(address(this));
+        qtyA = ERC20(tokenA).balanceOf(address(this));
+        qtyB = ERC20(tokenB).balanceOf(address(this));
 
-		ERC20(sellToken).transferFrom(msg.sender,address(this), sellAmount);
-		unit256 amountInNet = (sellAmount * (10000 - feebps))/ 10000
+        // pull tokens in
+        ERC20(sellToken).transferFrom(msg.sender, address(this), sellAmount);
 
-		if (sellToken == tokenA) {
-				unit256 k = qtyA * qtyB;
-				unit256 xNew = qtyA + amountInNet;
-				unit256 yNew = k / xNew;
-				swapAmt = qtyB - yNew;
+        // correct keyword: uint256 (not unit256), and add missing semicolon
+        uint256 amountInNet = (sellAmount * (10000 - feebps)) / 10000;
 
-				ERC20(tokenB).transfer(msg.sender, swapAmt);
+        if (sellToken == tokenA) {
+            uint256 k = qtyA * qtyB;
+            uint256 xNew = qtyA + amountInNet;
+            uint256 yNew = k / xNew;
+            swapAmt = qtyB - yNew;
 
-				emit Swap(tokenA, tokenB, sellAmount, swapAmt);
-		} else {
+            ERC20(tokenB).transfer(msg.sender, swapAmt);
+            emit Swap(tokenA, tokenB, sellAmount, swapAmt);
+        } else {
+            uint256 k = qtyA * qtyB;
+            uint256 xNew = qtyB + amountInNet;
+            uint256 yNew = k / xNew;
+            swapAmt = qtyA - yNew;
 
-				unit256 k = qtyA * qtyB;
-				unit256 xNew = qtyB + amountInNet;
-				unit256 yNew = k / xNew;
-				swapAmt = qtyA - yNew;
-
-				ERC20(tokenA).transfer(msg.sender, swapAmt);
-				emit Swap(tokenB, tokenA, sellAmount, swapAmt);
-		}
+            ERC20(tokenA).transfer(msg.sender, swapAmt);
+            emit Swap(tokenB, tokenA, sellAmount, swapAmt);
+        }
 
 		uint256 new_invariant = ERC20(tokenA).balanceOf(address(this))*ERC20(tokenB).balanceOf(address(this));
 		require( new_invariant >= invariant, 'Bad trade' );
