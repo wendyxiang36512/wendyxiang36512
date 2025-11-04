@@ -57,32 +57,25 @@ def scan_blocks(chain, start_block, end_block, contract_address, eventfile='depo
         # YOUR CODE HERE
         rows = []
         for evt in events:
-            block = w3.eth.get_block(evt.block_number)
-            ts = block["timestamp"]
-            date_str = datetime.utcfromtimestamp(ts).strftime("%m/%d/%Y %H:%M:%S")
-
-            rows.appen({
+            rows.append({
                 "chain": chain,
                 "token": evt.args["token"],
                 "recipient": evt.args["recipient"],
                 "amount": int(evt.args["amount"]),
                 "transactionHash": evt.transactionHash.hex(),
-                "address": evt.address,
-                "date": date_str
+                "address": evt.address
             })
 
         if rows:
-            df = pd.DataFrame(rows,columns ==[
+            df = pd.DataFrame(rows, columns=[
                 "chain", "token", "recipient", "amount",
-                "transactionHash", "address", "date"
-            ]) 
-
+                "transactionHash", "address"
+            ])
             file_path = Path(eventfile)
             if file_path.is_file():
-                df.to.csv(file_path, mode="a", header=False, index=False)
+                df.to_csv(file_path, mode="a", header=False, index=False)
             else:
                 df.to_csv(file_path, mode="w", header=True, index=False)
-
 
     else:
         for block_num in range(start_block,end_block+1):
@@ -93,27 +86,22 @@ def scan_blocks(chain, start_block, end_block, contract_address, eventfile='depo
 
             rows = []
             for evt in events:
-                block = w3.eth.get_block(evt.block_number)
-                ts = block["timestamp"]
-                date_str = datetime.utcfromtimestamp(ts).strftime("%m/%d/%Y %H:%M:%S")
-
                 rows.append({
                     "chain": chain,
                     "token": evt.args["token"],
                     "recipient": evt.args["recipient"],
                     "amount": int(evt.args["amount"]),
                     "transactionHash": evt.transactionHash.hex(),
-                    "address": evt.address,
-                    "date": date_str                    
+                    "address": evt.address
                 })
-            
+
             if rows:
                 df = pd.DataFrame(rows, columns=[
                     "chain", "token", "recipient", "amount",
-                    "transactionHash", "address", "date"
+                    "transactionHash", "address"
                 ])
                 file_path = Path(eventfile)
                 if file_path.is_file():
-                    df.to_csv(file_path, mode="a", header=False, index=False)                
+                    df.to_csv(file_path, mode="a", header=False, index=False)
                 else:
                     df.to_csv(file_path, mode="w", header=True, index=False)
