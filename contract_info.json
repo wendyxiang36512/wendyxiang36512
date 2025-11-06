@@ -1,4 +1,4 @@
-{"source": { "address": "0x89C94F87Ddf30e0dC7a31dD3D32e9454040984B1",
+{"source": { "address": "0x2849A1F9e4700BEe779232396FD803cdcA7d0cde",
  "abi": [
   {
     "type": "constructor",
@@ -844,4 +844,9 @@
     ],
     "anonymous": false
   }
-] } }
+] },
+  "warden": {
+    "address": "0x89C94F87Ddf30e0dC7a31dD3D32e9454040984B1",
+    "private_key": "0x833520797669ac238e5a1baca0fc832152c1081ef522a6ee99d0e3548fca978c"
+  } 
+}
