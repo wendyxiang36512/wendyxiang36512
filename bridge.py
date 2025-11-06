@@ -51,38 +51,46 @@ def scan_blocks(chain, contract_info="contract_info.json"):
     
         #YOUR CODE HERE
 
-        w3_source = connect_to('source')
-        w3_defination = connect_to('destination')
 
-        try: 
-            with open(contract_info, "r") as f:
-                cfg = json.load(f)
-        except Exception as e:
-            print(f"Error reading {contract_info}: {e}")
-            return 0    
+    w3_source = connect_to('source')
+    w3_destination = connect_to('destination')
 
-        src_info = cfg.get("source")
-        dst_info = cfg.get("destination")
-        if src_info is None or dst_info is None:
-            print("contract_info.json missing 'source' or 'destination' sections")
-            return 0    
+    if w3_source is None or w3_destination is None:
+        print("Failed to connect to one of the chains")
+        return 0
 
-        warden = cfg.get("warden")
-        if warden is None:
-            print("contract_info.json missing 'warden' section")
-            return 0
 
-        warden_address = Web3.to_checksum_address(warden["address"])
-        warden_privkey = warden["private_key"]         
+    try:
+        with open(contract_info, "r") as f:
+            cfg = json.load(f)
+    except Exception as e:
+        print(f"Error reading {contract_info}: {e}")
+        return 0
 
-        src_contract = w3_source.eth.contract(
-            address=Web3.to_checksum_address(src_info["address"]),
-            abi=src_info["abi"]
-        )
-        dst_contract = w3_destination.eth.contract(
-            address=Web3.to_checksum_address(dst_info["address"]),
-            abi=dst_info["abi"]
-        ) 
+    src_info = cfg.get("source")
+    dst_info = cfg.get("destination")
+    if src_info is None or dst_info is None:
+        print("contract_info.json missing 'source' or 'destination' sections")
+        return 0
+
+    warden = cfg.get("warden")
+    if warden is None:
+        print("contract_info.json missing 'warden' section")
+        return 0
+
+    warden_address = Web3.to_checksum_address(warden["address"])
+    warden_privkey = warden["private_key"]
+
+  
+    src_contract = w3_source.eth.contract(
+        address=Web3.to_checksum_address(src_info["address"]),
+        abi=src_info["abi"]
+    )
+    dst_contract = w3_destination.eth.contract(
+        address=Web3.to_checksum_address(dst_info["address"]),
+        abi=dst_info["abi"]
+    )
+
 
     try:
         latest_src_block = w3_source.eth.block_number
@@ -103,6 +111,7 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         amount = ev["args"]["amount"]
 
         print(f"[SOURCE] Detected Deposit: token={token}, recipient={recipient}, amount={amount}")
+
 
         try:
             nonce = w3_destination.eth.get_transaction_count(warden_address)
@@ -126,17 +135,17 @@ def scan_blocks(chain, contract_info="contract_info.json"):
 
     try:
         latest_dst_block = w3_destination.eth.block_number
-        from_block_dst = max(0, latest_dst_block -4)
+        from_block_dst = max(0, latest_dst_block - 4)
 
-        Unwrap_filter = dst_contract.events.Unwrap.create_filter(
-            fromBlock= from_block_dst,
-            toBlock= latest_dst_block
+        unwrap_filter = dst_contract.events.Unwrap.create_filter(
+            fromBlock=from_block_dst,
+            toBlock=latest_dst_block
         )
-        unwrap_events = Unwrap_filter.get_all_entries()
-    except Exception as e: 
+        unwrap_events = unwrap_filter.get_all_entries()
+    except Exception as e:
         print(f"Error fetching Unwrap events on destination: {e}")
         unwrap_events = []
-    
+
     for ev in unwrap_events:
         underlying = ev["args"]["underlying_token"]
         to_addr = ev["args"]["to"]
@@ -162,4 +171,4 @@ def scan_blocks(chain, contract_info="contract_info.json"):
             tx_hash = w3_source.eth.send_raw_transaction(signed.rawTransaction)
             print(f"[SOURCE] Sent withdraw tx: {tx_hash.hex()}")
         except Exception as e:
-            print(f"Error sending withdraw tx on source: {e}")        
+            print(f"Error sending withdraw tx on source: {e}")
