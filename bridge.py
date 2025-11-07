@@ -140,7 +140,8 @@ def scan_blocks(chain, contract_info="contract_info.json"):
             })
 
             signed = w3_destination.eth.account.sign_transaction(tx, private_key=warden_privkey)
-            tx_hash = w3_destination.eth.send_raw_transaction(signed.rawTransaction)
+            tx_hash = w3_destination.eth.send_raw_transaction(signed.raw_transaction)
+
             print(f"[DESTINATION] Sent wrap tx: {tx_hash.hex()}")
         except Exception as e:
             print(f"Error sending wrap tx on destination: {e}")
@@ -188,7 +189,8 @@ def scan_blocks(chain, contract_info="contract_info.json"):
             })
 
             signed = w3_source.eth.account.sign_transaction(tx, private_key=warden_privkey)
-            tx_hash = w3_source.eth.send_raw_transaction(signed.rawTransaction)
+            tx_hash = w3_source.eth.send_raw_transaction(signed.raw_transaction)
+
             print(f"[SOURCE] Sent withdraw tx: {tx_hash.hex()}")
         except Exception as e:
             print(f"Error sending withdraw tx on source: {e}")
