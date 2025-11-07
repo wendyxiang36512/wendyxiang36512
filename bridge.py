@@ -99,7 +99,7 @@ def scan_blocks(chain, contract_info="contract_info.json"):
     try:
         latest_src_block = w3_source.eth.block_number
         # last 5 blocks: [latest-4, ..., latest]
-        from_block_src = max(0, latest_src_block - 4)
+        from_block_src = max(0, latest_src_block - 50)
 
         # NOTE: web3.py v6 uses from_block / to_block (snake_case), **not** fromBlock/toBlock
         deposit_filter = src_contract.events.Deposit.create_filter(
@@ -150,7 +150,7 @@ def scan_blocks(chain, contract_info="contract_info.json"):
 
     try:
         latest_dst_block = w3_destination.eth.block_number
-        from_block_dst = max(0, latest_dst_block - 4)
+        from_block_dst = max(0, latest_dst_block - 50)
 
         unwrap_filter = dst_contract.events.Unwrap.create_filter(
             from_block=from_block_dst,
