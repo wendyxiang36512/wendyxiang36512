@@ -56,6 +56,7 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         #YOUR CODE HERE
 
 
+    # connect to both chains
     w3_source = connect_to('source')
     w3_destination = connect_to('destination')
 
@@ -63,8 +64,7 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         print("Failed to connect to one or both chains")
         return 0
 
-    # load json file 
-
+    # load json file
     try:
         with open(contract_info, "r") as f:
             cfg = json.load(f)
@@ -83,8 +83,7 @@ def scan_blocks(chain, contract_info="contract_info.json"):
     warden_address = Web3.to_checksum_address(warden_info["address"])
     warden_privkey = warden_info["private_key"]
 
-    # contract objects 
-
+    # contract objects
     src_contract = w3_source.eth.contract(
         address=Web3.to_checksum_address(src_info["address"]),
         abi=src_info["abi"],
@@ -94,14 +93,15 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         abi=dst_info["abi"],
     )
 
-    # call wrap() on destination
+    nonce_dst = w3_destination.eth.get_transaction_count(warden_address)
+    nonce_src = w3_source.eth.get_transaction_count(warden_address)
 
+    # call wrap() on destination
     try:
         latest_src_block = w3_source.eth.block_number
-        # last 5 blocks: [latest-4, ..., latest]
+        # use larger window so we don't miss events
         from_block_src = max(0, latest_src_block - 50)
 
-        # NOTE: web3.py v6 uses from_block / to_block (snake_case), **not** fromBlock/toBlock
         deposit_filter = src_contract.events.Deposit.create_filter(
             from_block=from_block_src,
             to_block=latest_src_block,
@@ -112,7 +112,6 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         deposit_events = []
 
     for ev in deposit_events:
-        # Use (txHash, logIndex) as a unique key so we don't process the same event twice
         key = (ev["transactionHash"].hex(), ev["logIndex"])
         if key in _processed_deposits:
             continue
@@ -124,16 +123,14 @@ def scan_blocks(chain, contract_info="contract_info.json"):
 
         print(f"[SOURCE] Detected Deposit: token={token}, recipient={recipient}, amount={amount}")
 
-        # Send wrap() on destination chain from the warden account
         try:
-            nonce = w3_destination.eth.get_transaction_count(warden_address)
             tx = dst_contract.functions.wrap(
                 token,
                 recipient,
                 amount
             ).build_transaction({
                 "from": warden_address,
-                "nonce": nonce,
+                "nonce": nonce_dst,
                 "gas": 500000,
                 "gasPrice": w3_destination.eth.gas_price,
                 "chainId": w3_destination.eth.chain_id,
@@ -141,11 +138,13 @@ def scan_blocks(chain, contract_info="contract_info.json"):
 
             signed = w3_destination.eth.account.sign_transaction(tx, private_key=warden_privkey)
             tx_hash = w3_destination.eth.send_raw_transaction(signed.raw_transaction)
-
             print(f"[DESTINATION] Sent wrap tx: {tx_hash.hex()}")
+
+            # increment nonce AFTER sending tx
+            nonce_dst += 1
+
         except Exception as e:
             print(f"Error sending wrap tx on destination: {e}")
-
     # unwrap events on destination
 
     try:
@@ -173,16 +172,14 @@ def scan_blocks(chain, contract_info="contract_info.json"):
 
         print(f"[DESTINATION] Detected Unwrap: underlying={underlying}, to={to_addr}, amount={amount}")
 
-        # Send withdraw() on source chain from the warden account
         try:
-            nonce = w3_source.eth.get_transaction_count(warden_address)
             tx = src_contract.functions.withdraw(
                 underlying,
                 to_addr,
                 amount
             ).build_transaction({
                 "from": warden_address,
-                "nonce": nonce,
+                "nonce": nonce_src,
                 "gas": 500000,
                 "gasPrice": w3_source.eth.gas_price,
                 "chainId": w3_source.eth.chain_id,
@@ -190,7 +187,10 @@ def scan_blocks(chain, contract_info="contract_info.json"):
 
             signed = w3_source.eth.account.sign_transaction(tx, private_key=warden_privkey)
             tx_hash = w3_source.eth.send_raw_transaction(signed.raw_transaction)
-
             print(f"[SOURCE] Sent withdraw tx: {tx_hash.hex()}")
+
+            # increment nonce after sending
+            nonce_src += 1
+
         except Exception as e:
             print(f"Error sending withdraw tx on source: {e}")
