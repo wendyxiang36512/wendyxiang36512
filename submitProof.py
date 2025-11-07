@@ -251,12 +251,22 @@ def get_contract_info(chain):
         Returns a contract address and contract abi from "contract_info.json"
         for the given chain
     """
-    contract_file = Path(__file__).parent.absolute() / "contract_info.json"
-    if not contract_file.is_file():
-        contract_file = Path(__file__).parent.parent.parent / "tests" / "contract_info.json"
+
+    tests_file = Path(__file__).parent.parent.parent / "tests" / "contract_info.json"
+    local_file = Path(__file__).parent.absolute() / "contract_info.json"
+
+    if tests_file.is_file():
+        contract_file = tests_file
+    else:
+        contract_file = local_file
+
     with open(contract_file, "r") as f:
-        d = json.load(f)
-        d = d[chain]
+        all_data = json.load(f)
+
+    if chain not in all_data:
+        raise KeyError(f"Chain '{chain}' not found in {contract_file}")
+        
+    d = all_data[chain]
     return d['address'], d['abi']
 
 
