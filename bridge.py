@@ -5,6 +5,10 @@ from datetime import datetime
 import json
 import pandas as pd
 
+_processed_deposits = set()
+_processed_unwraps = set()
+
+
 
 def connect_to(chain):
     if chain == 'source':  # The source contract chain is avax
