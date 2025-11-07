@@ -56,9 +56,10 @@ def scan_blocks(chain, contract_info="contract_info.json"):
     w3_destination = connect_to('destination')
 
     if w3_source is None or w3_destination is None:
-        print("Failed to connect to one of the chains")
+        print("Failed to connect to one or both chains")
         return 0
 
+    # load json file 
 
     try:
         with open(contract_info, "r") as f:
@@ -69,36 +70,37 @@ def scan_blocks(chain, contract_info="contract_info.json"):
 
     src_info = cfg.get("source")
     dst_info = cfg.get("destination")
-    if src_info is None or dst_info is None:
-        print("contract_info.json missing 'source' or 'destination' sections")
+    warden_info = cfg.get("warden")
+
+    if src_info is None or dst_info is None or warden_info is None:
+        print("contract_info.json missing 'source', 'destination', or 'warden' sections")
         return 0
 
-    warden = cfg.get("warden")
-    if warden is None:
-        print("contract_info.json missing 'warden' section")
-        return 0
+    warden_address = Web3.to_checksum_address(warden_info["address"])
+    warden_privkey = warden_info["private_key"]
 
-    warden_address = Web3.to_checksum_address(warden["address"])
-    warden_privkey = warden["private_key"]
+    # contract objects 
 
-  
     src_contract = w3_source.eth.contract(
         address=Web3.to_checksum_address(src_info["address"]),
-        abi=src_info["abi"]
+        abi=src_info["abi"],
     )
     dst_contract = w3_destination.eth.contract(
         address=Web3.to_checksum_address(dst_info["address"]),
-        abi=dst_info["abi"]
+        abi=dst_info["abi"],
     )
 
+    # call wrap() on destination
 
     try:
         latest_src_block = w3_source.eth.block_number
+        # last 5 blocks: [latest-4, ..., latest]
         from_block_src = max(0, latest_src_block - 4)
 
+        # NOTE: web3.py v6 uses from_block / to_block (snake_case), **not** fromBlock/toBlock
         deposit_filter = src_contract.events.Deposit.create_filter(
-            fromBlock=from_block_src,
-            toBlock=latest_src_block
+            from_block=from_block_src,
+            to_block=latest_src_block,
         )
         deposit_events = deposit_filter.get_all_entries()
     except Exception as e:
@@ -106,13 +108,19 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         deposit_events = []
 
     for ev in deposit_events:
+        # Use (txHash, logIndex) as a unique key so we don't process the same event twice
+        key = (ev["transactionHash"].hex(), ev["logIndex"])
+        if key in _processed_deposits:
+            continue
+        _processed_deposits.add(key)
+
         token = ev["args"]["token"]
         recipient = ev["args"]["recipient"]
         amount = ev["args"]["amount"]
 
         print(f"[SOURCE] Detected Deposit: token={token}, recipient={recipient}, amount={amount}")
 
-
+        # Send wrap() on destination chain from the warden account
         try:
             nonce = w3_destination.eth.get_transaction_count(warden_address)
             tx = dst_contract.functions.wrap(
@@ -133,13 +141,15 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         except Exception as e:
             print(f"Error sending wrap tx on destination: {e}")
 
+    # unwrap events on destination
+
     try:
         latest_dst_block = w3_destination.eth.block_number
         from_block_dst = max(0, latest_dst_block - 4)
 
         unwrap_filter = dst_contract.events.Unwrap.create_filter(
-            fromBlock=from_block_dst,
-            toBlock=latest_dst_block
+            from_block=from_block_dst,
+            to_block=latest_dst_block,
         )
         unwrap_events = unwrap_filter.get_all_entries()
     except Exception as e:
@@ -147,12 +157,18 @@ def scan_blocks(chain, contract_info="contract_info.json"):
         unwrap_events = []
 
     for ev in unwrap_events:
+        key = (ev["transactionHash"].hex(), ev["logIndex"])
+        if key in _processed_unwraps:
+            continue
+        _processed_unwraps.add(key)
+
         underlying = ev["args"]["underlying_token"]
         to_addr = ev["args"]["to"]
         amount = ev["args"]["amount"]
 
         print(f"[DESTINATION] Detected Unwrap: underlying={underlying}, to={to_addr}, amount={amount}")
 
+        # Send withdraw() on source chain from the warden account
         try:
             nonce = w3_source.eth.get_transaction_count(warden_address)
             tx = src_contract.functions.withdraw(
